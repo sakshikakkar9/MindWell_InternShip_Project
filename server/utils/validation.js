@@ -47,3 +47,32 @@ export const parseTags = (tagString) => {
     .filter(tag => tag !== '')   // Remove empty strings
     .map(tag => tag.toLowerCase()); // Keep it uniform for searching
 };
+
+/**
+ * Task 4: Preliminary Encryption (Caesar Cipher)
+ */
+
+// Encryption: Shifts characters forward
+export const encryptText = (text, shift = 3) => {
+  if (!text) return "";
+  return text
+    .split("")
+    .map((char) => {
+      const code = char.charCodeAt(0);
+      // Shift only printable characters (basic range)
+      return String.fromCharCode(code + shift);
+    })
+    .join("");
+};
+
+// Decryption: Shifts characters backward
+export const decryptText = (encryptedText, shift = 3) => {
+  if (!encryptedText) return "";
+  return encryptedText
+    .split("")
+    .map((char) => {
+      const code = char.charCodeAt(0);
+      return String.fromCharCode(code - shift);
+    })
+    .join("");
+};

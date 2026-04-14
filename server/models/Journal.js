@@ -1,27 +1,12 @@
 import mongoose from 'mongoose';
 
 const journalSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  content: {
-    type: String,
-    required: true
-  },
-  slug: {
-    type: String,
-    unique: true
-  },
-  tags: [String], // Array of strings for user-defined tags
-  mood: {
-    type: String,
-    default: 'neutral'
-  }
-}, {
-  timestamps: true // This automatically handles Task 3's "timestamps" requirement
+  title: { type: String, required: true },
+  slug: { type: String },
+  content: { type: String, required: true }, // This will store the ENCRYPTED text
+  tags: [String],
+  sessionToken: { type: String },
+  createdAt: { type: Date, default: Date.now }
 });
 
-const Journal = mongoose.model('Journal', journalSchema);
-export default Journal;
+export default mongoose.model('Journal', journalSchema);

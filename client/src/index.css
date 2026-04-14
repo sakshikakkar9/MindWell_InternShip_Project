@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+/* If the above doesn't work, stick to the v3 syntax: */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #f9fafb;
+}

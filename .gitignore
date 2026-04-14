@@ -12,3 +12,7 @@ build/
 
 # OS files
 .DS_Store
+node_modules/
+server/.env
+client/.env
+.DS_Store

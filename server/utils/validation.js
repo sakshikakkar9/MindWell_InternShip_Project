@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 /**
  * MindWell Validation Utilities
  * Focus: Privacy and Data Integrity
@@ -75,4 +76,24 @@ export const decryptText = (encryptedText, shift = 3) => {
       return String.fromCharCode(code - shift);
     })
     .join("");
+};
+
+/**
+ * Task 5: Secure Token Generation
+ * Creates a unique, unpredictable string for session IDs or Journal IDs
+ */
+export const generateSecureToken = (length = 32) => {
+  // We use characters that are URL-safe
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+  let token = '';
+  
+  // Generate random bytes for better security
+  const randomBytes = crypto.randomBytes(length);
+  
+  for (let i = 0; i < length; i++) {
+    // Map each random byte to a character in our pool
+    token += chars.charAt(randomBytes[i] % chars.length);
+  }
+  
+  return token;
 };

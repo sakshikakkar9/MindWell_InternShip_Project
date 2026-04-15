@@ -8,3 +8,17 @@
 body {
   background-color: #f9fafb;
 }
+/* Add this to your index.css or a style tag in App.jsx */
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 0 0px rgba(99, 102, 241, 0.4); }
+  70% { box-shadow: 0 0 0 20px rgba(99, 102, 241, 0); }
+  100% { box-shadow: 0 0 0 0px rgba(99, 102, 241, 0); }
+}
+
+.breathing-circle-active {
+  transition: all 4000ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hold-pulse {
+  animation: pulse-glow 2s infinite;
+}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import BreathingExercise from './components/BreathingCircle';
 import MoodTrend from './components/MoodTrend';
 import JournalTimeline from './components/JournalTimeline';
+import ReminderSettings from './components/ReminderSettings';
 
 // --- TASK 19: FEEDBACK COMPONENT ---
 const FeedbackForm = () => {
@@ -303,6 +304,7 @@ function App() {
         <div className="max-w-xl w-full">
           <div className="bg-white p-10 rounded-[3rem] shadow-sm border border-gray-100 space-y-8 text-gray-800">
               <h2 className="text-2xl font-bold">Profile Settings</h2>
+              <ReminderSettings />
               <FeedbackForm />
               <button onClick={() => setShowProfile(false)} className="w-full text-gray-300 font-bold text-sm">Return to Journal</button>
           </div>

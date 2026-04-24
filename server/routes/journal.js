@@ -1,7 +1,7 @@
 import express from 'express';
 import Journal from '../models/Journal.js';
 import auth from '../middleware/auth.js'; 
-import { encryptText, decryptText, slugify, sanitizeEntry } from '../utils/validation.js';
+import { encryptText, decryptText, slugify, sanitizeEntry, analyzeSentiment } from '../utils/validation.js';
 
 const router = express.Router();
 
@@ -58,6 +58,7 @@ router.post('/save', auth, async (req, res) => {
       title: encryptText(sanitizedTitle, 5),
       content: encryptText(sanitizedContent, 5),
       slug: slugify(sanitizedTitle), // Task 2: Slugify
+      sentimentScore: analyzeSentiment(sanitizedContent), // Task 10: Sentiment Analysis
       tags: tags ? (Array.isArray(tags) ? tags : tags.split(',').map(t => t.trim())) : [],
       createdAt: new Date()
     });

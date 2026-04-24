@@ -15,6 +15,7 @@ const journalSchema = new mongoose.Schema({
   
   title: { type: String, required: true },
   slug: { type: String },
+  sentimentScore: { type: Number, default: 3 },
   
   // Encrypted content from Task 4
   content: { type: String, required: true }, 

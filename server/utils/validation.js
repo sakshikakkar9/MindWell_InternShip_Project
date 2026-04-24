@@ -97,3 +97,25 @@ export const generateSecureToken = (length = 32) => {
   
   return token;
 };
+
+/**
+ * Task 10/17: Simple Sentiment Analysis
+ * Provides a score from 1 (Challenging) to 5 (Uplifting)
+ */
+export const analyzeSentiment = (text) => {
+  if (!text) return 3;
+
+  const positiveWords = ['happy', 'great', 'good', 'amazing', 'productive', 'calm', 'love', 'excited', 'mastery', 'uplifting', 'excellent'];
+  const negativeWords = ['sad', 'tired', 'anxious', 'stress', 'bad', 'angry', 'hate', 'low', 'heavy', 'challenging', 'stressful'];
+
+  const words = text.toLowerCase().split(/\W+/);
+  let score = 3; // Start at neutral
+
+  words.forEach(word => {
+    if (positiveWords.includes(word)) score++;
+    if (negativeWords.includes(word)) score--;
+  });
+
+  // Clamp between 1 and 5
+  return Math.max(1, Math.min(5, score));
+};

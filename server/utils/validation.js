@@ -54,7 +54,7 @@ export const parseTags = (tagString) => {
  */
 
 // Encryption: Shifts characters forward
-export const encryptText = (text, shift = 3) => {
+export const encryptText = (text, shift = 5) => {
   if (!text) return "";
   return text
     .split("")
@@ -67,7 +67,7 @@ export const encryptText = (text, shift = 3) => {
 };
 
 // Decryption: Shifts characters backward
-export const decryptText = (encryptedText, shift = 3) => {
+export const decryptText = (encryptedText, shift = 5) => {
   if (!encryptedText) return "";
   return encryptedText
     .split("")

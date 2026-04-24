@@ -1,7 +1,7 @@
 import express from 'express';
 import Journal from '../models/Journal.js';
 import auth from '../middleware/auth.js'; 
-import { encrypt, decrypt } from '../utils/encryption.js'; // Ensure these utils exist
+import { encryptText, decryptText } from '../utils/validation.js';
 
 const router = express.Router();
 
@@ -17,16 +17,11 @@ router.get('/entries', auth, async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-    // --- THE FIX: Convert encrypted DB data to readable text ---
     const decryptedEntries = entries.map(entry => {
       const entryObj = entry.toObject(); 
       try {
-        // We decrypt here so the frontend receives "I CAN" instead of "U2Fsd..."
-        entryObj.content = decrypt(entry.content); 
-        // Only decrypt title if you encrypted it during save
-        if (entry.title.includes('U2Fsd')) {
-           entryObj.title = decrypt(entry.title);
-        }
+        entryObj.content = decryptText(entry.content, 5);
+        entryObj.title = decryptText(entry.title, 5);
       } catch (e) {
         console.error("Decryption failed for entry:", entry._id);
       }
@@ -36,7 +31,7 @@ router.get('/entries', auth, async (req, res) => {
     const total = await Journal.countDocuments({ userId: req.user.id });
 
     res.json({
-      entries: decryptedEntries, // Send the readable version
+      entries: decryptedEntries,
       hasMore: page * limit < total
     });
   } catch (err) {
@@ -49,7 +44,6 @@ router.post('/save', auth, async (req, res) => {
   try {
     const { title, content, tags } = req.body;
     
-    // Ensure req.user.id exists (comes from your auth middleware)
     if (!req.user || !req.user.id) {
       return res.status(401).json({ message: "User identity lost" });
     }
@@ -57,16 +51,38 @@ router.post('/save', auth, async (req, res) => {
     const newEntry = new Journal({
       userId: req.user.id, 
       userEmail: req.user.email,
-      title: encrypt(title), 
-      content: encrypt(content),
-      tags: tags ? tags.split(',').map(t => t.trim()) : [],
+      title: encryptText(title, 5),
+      content: encryptText(content, 5),
+      tags: tags ? (Array.isArray(tags) ? tags : tags.split(',').map(t => t.trim())) : [],
       createdAt: new Date()
     });
 
     await newEntry.save();
     res.status(201).json({ message: "Saved" });
   } catch (error) { 
+    console.error(error);
     res.status(500).send("Error saving entry"); 
+  }
+});
+
+// --- EXPORT ROUTE ---
+router.get('/export', auth, async (req, res) => {
+  try {
+    const entries = await Journal.find({ userId: req.user.id }).sort({ createdAt: -1 });
+
+    const decryptedData = entries.map(entry => ({
+      title: decryptText(entry.title, 5),
+      content: decryptText(entry.content, 5),
+      tags: entry.tags,
+      date: entry.createdAt
+    }));
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename=mindwell_backup.json`);
+
+    res.status(200).send(JSON.stringify(decryptedData, null, 2));
+  } catch (error) {
+    res.status(500).json({ message: "Export failed" });
   }
 });
 

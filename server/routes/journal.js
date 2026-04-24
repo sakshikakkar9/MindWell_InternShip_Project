@@ -1,7 +1,7 @@
 import express from 'express';
 import Journal from '../models/Journal.js';
 import auth from '../middleware/auth.js'; 
-import { encryptText, decryptText } from '../utils/validation.js';
+import { encryptText, decryptText, slugify, sanitizeEntry } from '../utils/validation.js';
 
 const router = express.Router();
 
@@ -48,11 +48,16 @@ router.post('/save', auth, async (req, res) => {
       return res.status(401).json({ message: "User identity lost" });
     }
 
+    // Task 2: Sanitize inputs
+    const sanitizedTitle = sanitizeEntry(title).cleaned;
+    const sanitizedContent = sanitizeEntry(content).cleaned;
+
     const newEntry = new Journal({
       userId: req.user.id, 
       userEmail: req.user.email,
-      title: encryptText(title, 5),
-      content: encryptText(content, 5),
+      title: encryptText(sanitizedTitle, 5),
+      content: encryptText(sanitizedContent, 5),
+      slug: slugify(sanitizedTitle), // Task 2: Slugify
       tags: tags ? (Array.isArray(tags) ? tags : tags.split(',').map(t => t.trim())) : [],
       createdAt: new Date()
     });

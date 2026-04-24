@@ -3,18 +3,19 @@ import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 
-dotenv.config();
+// Import models first
+import './models/User.js';
+import './models/Journal.js';
+import './models/Feedback.js';
 
-// User Schema for Authentication
-const userSchema = new mongoose.Schema({
-  username: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true }, 
-  resetPasswordToken: String,
-  resetPasswordExpires: Date,
-  preferences: Object
-});
-mongoose.model('User', userSchema);
+// Import routers
+import authRoutes from './routes/auth.js';
+import journalRoutes from './routes/journal.js';
+import feedbackRoutes from './routes/feedback.js';
+import userRoutes from './routes/user.js';
+import analyticsRoutes from './routes/analytics.js';
+
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -26,23 +27,11 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ LOCAL DATABASE CONNECTED SUCCESSFULLY'))
   .catch((err) => console.log('❌ Connection Failed:', err.message));
 
-// Async import routers to ensure models are registered
-const loadRoutes = async () => {
-  const authRoutes = (await import('./routes/auth.js')).default;
-  const journalRoutes = (await import('./routes/journal.js')).default;
-  const feedbackRoutes = (await import('./routes/feedback.js')).default;
-  const userRoutes = (await import('./routes/user.js')).default;
-  const analyticsRoutes = (await import('./routes/analytics.js')).default;
+// Mount Routers
+app.use('/api/auth', authRoutes);
+app.use('/api/journal', journalRoutes);
+app.use('/api/feedback', feedbackRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
-  app.use('/api/auth', authRoutes);
-  app.use('/api/journal', journalRoutes);
-  app.use('/api/feedback', feedbackRoutes);
-  app.use('/api/user', userRoutes);
-  app.use('/api/analytics', analyticsRoutes);
-};
-
-loadRoutes().then(() => {
-  app.listen(PORT, () => console.log(`🚀 Server active on port ${PORT}`));
-}).catch(err => {
-  console.error("Failed to load routes:", err);
-});
+app.listen(PORT, () => console.log(`🚀 Server active on port ${PORT}`));

@@ -100,9 +100,10 @@ router.post('/login', async (req, res) => {
     if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
 
     // Use JWT_SECRET from process.env
+    const secret = process.env.JWT_SECRET || 'mindwell_secret_key_123';
     const token = jwt.sign(
       { id: user._id, email: user.email },
-      process.env.JWT_SECRET,
+      secret,
       { expiresIn: '7d' }
     );
     res.status(200).json({ message: "Login successful", token });

@@ -32,9 +32,14 @@ const limiter = rateLimit({
   message: "Too many requests from this IP, please try again after 15 minutes"
 });
 
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(limiter);
-app.use(cors()); 
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
 app.use(express.json());
 
 mongoose.connect(process.env.MONGO_URI)

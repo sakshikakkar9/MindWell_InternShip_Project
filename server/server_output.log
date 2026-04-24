@@ -1,3 +1,0 @@
-◇ injecting env (0) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
-❌ Connection Failed: The `uri` parameter to `openUri()` must be a string, got "undefined". Make sure the first parameter to `mongoose.connect()` or `mongoose.createConnection()` is a string.
-🚀 Server active on port 5000

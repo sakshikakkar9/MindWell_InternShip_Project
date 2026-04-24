@@ -1,6 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import auth from '../middleware/auth.js';
+import bcrypt from 'bcrypt';
 
 const router = express.Router();
 const User = mongoose.model('User');
@@ -31,8 +32,9 @@ router.post('/update-profile', auth, async (req, res) => {
 router.post('/change-password', auth, async (req, res) => {
   try {
     const { newPassword } = req.body;
-    // In a real app, hash the newPassword
-    await User.findByIdAndUpdate(req.user.id, { password: newPassword });
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    await User.findByIdAndUpdate(req.user.id, { password: hashedPassword });
     res.status(200).json({ message: "Password changed successfully" });
   } catch (error) {
     res.status(500).json({ message: "Password change failed" });

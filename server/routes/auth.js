@@ -1,6 +1,8 @@
 import express from 'express';
 import crypto from 'crypto';
 import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import { generateSecureToken } from '../utils/validation.js';
 
 const router = express.Router();
@@ -53,7 +55,8 @@ router.post('/reset-password/:token', async (req, res) => {
 
     if (!user) return res.status(400).json({ message: "Token invalid or expired." });
 
-    user.password = password; // Ensure you have a 'pre-save' hook to hash this!
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(password, salt);
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     await user.save();
@@ -71,7 +74,14 @@ router.post('/signup', async (req, res) => {
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ message: "Email already exists" });
 
-    const newUser = new User({ username, email, password });
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const newUser = new User({
+      username,
+      email,
+      password: hashedPassword
+    });
     await newUser.save();
     res.status(201).json({ message: "Account created!" });
   } catch (error) {
@@ -83,11 +93,13 @@ router.post('/signup', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email, password });
+    const user = await User.findOne({ email });
     if (!user) return res.status(401).json({ message: "Invalid credentials" });
 
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
+
     // Use JWT_SECRET from process.env
-    const jwt = (await import('jsonwebtoken')).default;
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,

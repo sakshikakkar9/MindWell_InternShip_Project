@@ -9,6 +9,7 @@ import helmet from 'helmet';
 import './models/User.js';
 import './models/Journal.js';
 import './models/Feedback.js';
+import './models/Reminder.js';
 
 // Import routers
 import authRoutes from './routes/auth.js';
@@ -16,6 +17,8 @@ import journalRoutes from './routes/journal.js';
 import feedbackRoutes from './routes/feedback.js';
 import userRoutes from './routes/user.js';
 import analyticsRoutes from './routes/analytics.js';
+import reminderRoutes from './routes/reminder.js';
+import { startReminderService } from './utils/notifications.js';
 
 dotenv.config();
 
@@ -44,5 +47,9 @@ app.use('/api/journal', journalRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/reminders', reminderRoutes);
 
-app.listen(PORT, () => console.log(`🚀 Server active on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 Server active on port ${PORT}`);
+  startReminderService();
+});

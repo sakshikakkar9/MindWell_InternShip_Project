@@ -6,7 +6,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
-
+import cors from 'cors';
 // Import models
 import './models/User.js';
 import './models/Journal.js';
@@ -26,6 +26,11 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+app.use(cors({
+  origin: 'https://your-mindwell-frontend.vercel.app', // Your actual Vercel URL
+  credentials: true
+}));
 
 app.use(helmet());
 app.use(cors()); 

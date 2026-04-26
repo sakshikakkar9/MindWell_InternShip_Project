@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API from '../../api.js'; // Adjust the path based on your folder structure
 
 const ReminderSettings = () => {
   const [reminders, setReminders] = useState([]);
@@ -10,13 +11,11 @@ const ReminderSettings = () => {
   const fetchReminders = async () => {
     const token = localStorage.getItem('token');
     try {
-      const response = await fetch('http://localhost:5000/api/reminders', {
+      // Replaced fetch with API.get
+      const response = await API.get('/reminders', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (response.ok) {
-        const data = await response.json();
-        setReminders(data);
-      }
+      setReminders(response.data);
     } catch (err) {
       console.error("Failed to fetch reminders", err);
     }
@@ -31,18 +30,13 @@ const ReminderSettings = () => {
     setIsSaving(true);
     const token = localStorage.getItem('token');
     try {
-      const response = await fetch('http://localhost:5000/api/reminders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ activity, time, days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] })
-      });
-      if (response.ok) {
-        setMessage("Reminder added!");
-        fetchReminders();
-      }
+      // Replaced fetch with API.post
+      await API.post('/reminders', 
+        { activity, time, days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      setMessage("Reminder added!");
+      fetchReminders();
     } catch (err) {
       setMessage("Failed to add reminder");
     } finally {
@@ -53,13 +47,11 @@ const ReminderSettings = () => {
   const handleDelete = async (id) => {
     const token = localStorage.getItem('token');
     try {
-      const response = await fetch(`http://localhost:5000/api/reminders/${id}`, {
-        method: 'DELETE',
+      // Replaced fetch with API.delete
+      await API.delete(`/reminders/${id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (response.ok) {
-        fetchReminders();
-      }
+      fetchReminders();
     } catch (err) {
       console.error("Delete failed", err);
     }

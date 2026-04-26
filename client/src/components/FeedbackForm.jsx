@@ -1,34 +1,37 @@
 import React, { useState } from 'react';
+import API from '../../api.js'; // Adjust the path based on your folder structure
 
 const FeedbackForm = () => {
   const [type, setType] = useState('General');
   const [message, setMessage] = useState('');
   const [status, setStatus] = useState(null);
+  const [isSending, setIsSending] = useState(false); // Added missing state
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  // ... validation check ...
-  setIsSending(true);
+    e.preventDefault();
+    if (!message.trim()) return;
 
-  // Get the token from the normalized key name
-  const token = localStorage.getItem('token'); // This pulls the token standardized in Step 1
+    setIsSending(true);
+    const token = localStorage.getItem('token');
 
-  try {
-    const response = await fetch('http://localhost:5000/api/feedback', {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` 
-      },
-      body: JSON.stringify({ type, message })
-    });
-    // ... rest of response handling ...
-  } catch (err) {
-    setStatus({ success: false, text: "Server connection error." });
-  } finally {
-    setIsSending(false);
-  }
-};
+    try {
+      // Replaced fetch with API.post
+      await API.post('/feedback', 
+        { type, message },
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      
+      setStatus({ success: true, text: "Feedback sent! Thank you." });
+      setMessage('');
+    } catch (err) {
+      setStatus({ 
+        success: false, 
+        text: err.response?.data?.message || "Server connection error." 
+      });
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   return (
     <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
@@ -47,8 +50,12 @@ const FeedbackForm = () => {
           placeholder="What's on your mind?"
           value={message} onChange={(e) => setMessage(e.target.value)}
         />
-        <button type="submit" className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold text-sm shadow-md hover:bg-indigo-700 transition-all">
-          Send Feedback
+        <button 
+          type="submit" 
+          disabled={isSending}
+          className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold text-sm shadow-md hover:bg-indigo-700 transition-all disabled:opacity-50"
+        >
+          {isSending ? 'Sending...' : 'Send Feedback'}
         </button>
         {status && (
           <p className={`text-center text-xs font-bold mt-2 ${status.success ? 'text-green-500' : 'text-red-400'}`}>

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import CryptoJS from 'crypto-js';
+import API from '../api.js';
+
 import BreathingExercise from './components/BreathingCircle';
 import MoodTrend from './components/MoodTrend';
 import JournalTimeline from './components/JournalTimeline';
@@ -15,7 +17,7 @@ function App() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isLoggedIn, setIsLoggedIn] = useState(false); 
   const [view, setView] = useState('login'); 
-  const [authData, setAuthData] = useState({ email: '', password: '' });
+  const [authData, setAuthData] = useState({ username: '', email: '', password: '' });
   const [authMessage, setAuthMessage] = useState('');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -30,7 +32,6 @@ function App() {
   // --- REMINDER ENGINE ---
   useEffect(() => {
     if (isLoggedIn) {
-      // Request browser permission for notifications
       if (Notification.permission === "default") {
         Notification.requestPermission();
       }
@@ -54,7 +55,7 @@ function App() {
         });
       };
 
-      const interval = setInterval(checkReminders, 60000); // Check every minute
+      const interval = setInterval(checkReminders, 60000); 
       return () => clearInterval(interval);
     }
   }, [isLoggedIn]);
@@ -77,24 +78,23 @@ function App() {
   const handleAuthAction = async (endpoint) => {
     setAuthMessage("");
     try {
-      const response = await fetch(`http://localhost:5000/api/auth/${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(authData),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        if (endpoint === 'signup') { 
-          setAuthMessage("Account Ready! Login now."); 
-          setView('login'); 
-        } else {
-          localStorage.setItem('token', data.token); 
-          setIsLoggedIn(true);
-        }
+      // Conditionally structure the payload based on login vs signup
+      const payload = endpoint === 'login' 
+        ? { email: authData.email, password: authData.password }
+        : { username: authData.username, email: authData.email, password: authData.password };
+
+      const response = await API.post(`/auth/${endpoint}`, payload);
+      
+      if (endpoint === 'signup') { 
+        setAuthMessage("Account Ready! Login now."); 
+        setView('login'); 
       } else {
-        setAuthMessage(data.message || "Invalid Credentials");
+        localStorage.setItem('token', response.data.token); 
+        setIsLoggedIn(true);
       }
-    } catch (err) { setAuthMessage("Server connection failed."); }
+    } catch (err) { 
+      setAuthMessage(err.response?.data?.message || "Server connection failed."); 
+    }
   };
 
   const handleSync = async () => {
@@ -103,10 +103,8 @@ function App() {
       const token = localStorage.getItem('token');
       try {
         for (const entry of offlineData) {
-          await fetch('http://localhost:5000/api/journal/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify(entry),
+          await API.post('/journal/save', entry, {
+            headers: { 'Authorization': `Bearer ${token}` }
           });
         }
         await clearOfflineEntries();
@@ -119,20 +117,18 @@ function App() {
     setIsLoading(true);
     const token = localStorage.getItem('token');
     try {
-      const response = await fetch(`http://localhost:5000/api/journal/entries`, {
+      const response = await API.get(`/journal/entries`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      const data = await response.json();
-      if (response.ok) {
-        const decoded = data.entries.map(entry => {
-          try {
-            const bytes = CryptoJS.AES.decrypt(entry.content, SECRET_KEY);
-            return { ...entry, content: bytes.toString(CryptoJS.enc.Utf8) };
-          } catch (e) { return entry; }
-        });
-        setEntries(decoded);
-        generateInsights(decoded);
-      }
+      
+      const decoded = response.data.entries.map(entry => {
+        try {
+          const bytes = CryptoJS.AES.decrypt(entry.content, SECRET_KEY);
+          return { ...entry, content: bytes.toString(CryptoJS.enc.Utf8) };
+        } catch (e) { return entry; }
+      });
+      setEntries(decoded);
+      generateInsights(decoded);
     } catch (e) { console.error(e); }
     finally { setIsLoading(false); }
   };
@@ -153,12 +149,10 @@ function App() {
 
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch('http://localhost:5000/api/journal/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(entryData),
+      await API.post('/journal/save', entryData, {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (res.ok) { setContent(''); setTitle(''); setTags(''); fetchEntries(); }
+      setContent(''); setTitle(''); setTags(''); fetchEntries(); 
     } catch (e) { console.error(e); }
     finally { setIsSaving(false); }
   };
@@ -190,8 +184,36 @@ function App() {
         <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-10 border border-slate-100">
           <h2 className="text-3xl font-black text-indigo-950 mb-6 text-center">MindWell</h2>
           <div className="space-y-4">
-            <input type="text" placeholder="Email" className="w-full px-6 py-4 bg-slate-50 rounded-2xl outline-none" onChange={(e) => setAuthData({...authData, email: e.target.value})} />
-            <input type="password" placeholder="Password" className="w-full px-6 py-4 bg-slate-50 rounded-2xl outline-none" onChange={(e) => setAuthData({...authData, password: e.target.value})} />
+            
+            {/* IMPORTANT: Username is ONLY rendered if view is 'signup'.
+               If the view is 'login', this block is entirely skipped.
+            */}
+            {view === 'signup' && (
+              <input 
+                type="text" 
+                placeholder="Username" 
+                className="w-full px-6 py-4 bg-slate-50 rounded-2xl outline-none border border-transparent focus:border-indigo-200 transition-all" 
+                value={authData.username}
+                onChange={(e) => setAuthData({...authData, username: e.target.value})} 
+              />
+            )}
+            
+            <input 
+              type="text" 
+              placeholder="Email" 
+              className="w-full px-6 py-4 bg-slate-50 rounded-2xl outline-none" 
+              value={authData.email}
+              onChange={(e) => setAuthData({...authData, email: e.target.value})} 
+            />
+            
+            <input 
+              type="password" 
+              placeholder="Password" 
+              className="w-full px-6 py-4 bg-slate-50 rounded-2xl outline-none" 
+              value={authData.password}
+              onChange={(e) => setAuthData({...authData, password: e.target.value})} 
+            />
+            
             <button onClick={() => handleAuthAction(view)} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition-all">
               {view === 'login' ? 'Sign In' : 'Sign Up'}
             </button>

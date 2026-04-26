@@ -30,7 +30,12 @@ const PORT = process.env.PORT || 5000;
 // FIX 1: Only one CORS declaration is needed. 
 // Replace 'https://your-mindwell-frontend.vercel.app' with your ACTUAL Vercel URL from your screenshot.
 app.use(cors({
-  origin: 'https://mind-well-intern-ship-project.vercel.app', 
+  origin: (origin, callback) => {
+    // Allow any origin that makes a request
+    // If the request has no origin (like a server-to-server call or Postman), allow it
+    if (!origin) return callback(null, true);
+    callback(null, true);
+  },
   credentials: true
 }));
 

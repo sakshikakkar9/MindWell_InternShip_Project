@@ -1,3 +1,5 @@
+import dns from 'node:dns';
+dns.setDefaultResultOrder('ipv4first'); // Fixes ECONNREFUSED on Windows
 import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
@@ -5,7 +7,7 @@ import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 
-// Import models first
+// Import models
 import './models/User.js';
 import './models/Journal.js';
 import './models/Feedback.js';
@@ -25,23 +27,26 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Rate Limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: "Too many requests from this IP, please try again after 15 minutes"
-});
-
 app.use(helmet());
-app.use(limiter);
 app.use(cors()); 
 app.use(express.json());
 
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ LOCAL DATABASE CONNECTED SUCCESSFULLY'))
-  .catch((err) => console.log('❌ Connection Failed:', err.message));
+const connectDB = async () => {
+  try {
+    console.log('⏳ Connecting via VPN Tunnel (Standard Mode)...');
+    await mongoose.connect(process.env.MONGO_URI, {
+  serverSelectionTimeoutMS: 30000,
+  family: 4, 
+  tlsAllowInvalidCertificates: true,
+  // directConnection: true // Add this to force connection to the specified shards
+});
+    console.log('✅ MONGODB ATLAS CONNECTED SUCCESSFULLY');
+  } catch (err) {
+    console.error('❌ Connection Failed:', err.message);
+    process.exit(1);
+  }
+};
 
-// Mount Routers
 app.use('/api/auth', authRoutes);
 app.use('/api/journal', journalRoutes);
 app.use('/api/feedback', feedbackRoutes);
@@ -49,7 +54,12 @@ app.use('/api/user', userRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/reminders', reminderRoutes);
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server active on port ${PORT}`);
-  startReminderService();
-});
+const startServer = async () => {
+  await connectDB();
+  app.listen(PORT, () => {
+    console.log(`🚀 Server active on port ${PORT}`);
+    startReminderService();
+  });
+};
+
+startServer();

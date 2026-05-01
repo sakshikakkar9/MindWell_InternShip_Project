@@ -20,6 +20,13 @@ const journalSchema = new mongoose.Schema({
   content: { type: String, required: true }, 
   
   tags: [String],
+  sentimentScore: { type: Number, default: 3 },
+  versionHistory: [{
+    title: String,
+    content: String,
+    tags: [String],
+    updatedAt: { type: Date, default: Date.now }
+  }],
   sessionToken: { type: String },
   
   // Ensuring we use Date objects for our Trend Analytics (Task 18)

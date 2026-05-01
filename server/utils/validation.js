@@ -97,3 +97,24 @@ export const generateSecureToken = (length = 32) => {
   
   return token;
 };
+
+/**
+ * Task 21: Sentiment Analysis Utility
+ * Returns a score from 1 (negative) to 5 (positive)
+ */
+export const calculateSentiment = (text) => {
+  if (!text) return 3;
+
+  const positiveWords = ['happy', 'joy', 'excited', 'wonderful', 'great', 'content', 'peaceful', 'calm', 'grateful', 'blessed', 'productive', 'love', 'amazing'];
+  const negativeWords = ['sad', 'angry', 'stressed', 'anxious', 'worried', 'tired', 'frustrated', 'bad', 'awful', 'terrible', 'lonely', 'depressed', 'hate'];
+
+  const words = text.toLowerCase().split(/\W+/);
+  let score = 3; // Neutral starting point
+
+  words.forEach(word => {
+    if (positiveWords.includes(word)) score += 0.5;
+    if (negativeWords.includes(word)) score -= 0.5;
+  });
+
+  return Math.max(1, Math.min(5, Math.round(score)));
+};

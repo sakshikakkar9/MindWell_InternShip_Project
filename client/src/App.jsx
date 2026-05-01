@@ -8,6 +8,8 @@ import JournalTimeline from './components/JournalTimeline';
 import ReminderSettings from './components/ReminderSettings';
 import FeedbackForm from './components/FeedbackForm';
 import MoodInsights from './components/MoodInsights';
+import WellnessResources from './components/WellnessResources';
+import VersionComparison from './components/VersionComparison';
 import { saveOfflineEntry, getOfflineEntries, clearOfflineEntries } from './utils/db';
 
 const SECRET_KEY = 'your-secret-key-123'; 
@@ -17,6 +19,7 @@ function App() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isLoggedIn, setIsLoggedIn] = useState(false); 
   const [view, setView] = useState('login'); 
+  const [mainView, setMainView] = useState('dashboard'); // dashboard, profile, resources
   const [authData, setAuthData] = useState({ username: '', email: '', password: '' });
   const [authMessage, setAuthMessage] = useState('');
   const [title, setTitle] = useState('');
@@ -26,7 +29,8 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [showProfile, setShowProfile] = useState(false);
+  const [editingEntryId, setEditingEntryId] = useState(null);
+  const [comparingEntry, setComparingEntry] = useState(null);
   const [analytics, setAnalytics] = useState({});
 
   // --- REMINDER ENGINE ---
@@ -124,7 +128,19 @@ function App() {
       const decoded = response.data.entries.map(entry => {
         try {
           const bytes = CryptoJS.AES.decrypt(entry.content, SECRET_KEY);
-          return { ...entry, content: bytes.toString(CryptoJS.enc.Utf8) };
+          const decryptedContent = bytes.toString(CryptoJS.enc.Utf8);
+
+          let decryptedHistory = [];
+          if (entry.versionHistory) {
+            decryptedHistory = entry.versionHistory.map(v => {
+              try {
+                const vBytes = CryptoJS.AES.decrypt(v.content, SECRET_KEY);
+                return { ...v, content: vBytes.toString(CryptoJS.enc.Utf8) };
+              } catch (e) { return v; }
+            });
+          }
+
+          return { ...entry, content: decryptedContent, versionHistory: decryptedHistory };
         } catch (e) { return entry; }
       });
       setEntries(decoded);
@@ -136,25 +152,58 @@ function App() {
   const handleSave = async () => {
     if (!content.trim()) return;
     setIsSaving(true);
-    const encrypted = CryptoJS.AES.encrypt(content, SECRET_KEY).toString();
-    const entryData = { title, content: encrypted, tags };
 
-    if (!isOnline) {
-      await saveOfflineEntry(entryData);
-      setAuthMessage("Saved offline.");
-      setContent(''); setTitle(''); setTags('');
-      setIsSaving(false);
-      return;
-    }
+    // Calculate sentiment on plaintext before encryption
+    const positiveWords = ['happy', 'joy', 'excited', 'wonderful', 'great', 'content', 'peaceful', 'calm', 'grateful', 'blessed', 'productive', 'love', 'amazing'];
+    const negativeWords = ['sad', 'angry', 'stressed', 'anxious', 'worried', 'tired', 'frustrated', 'bad', 'awful', 'terrible', 'lonely', 'depressed', 'hate'];
+    const words = content.toLowerCase().split(/\W+/);
+    let score = 3;
+    words.forEach(word => {
+      if (positiveWords.includes(word)) score += 0.5;
+      if (negativeWords.includes(word)) score -= 0.5;
+    });
+    const sentimentScore = Math.max(1, Math.min(5, Math.round(score)));
+
+    // We keep client-side encryption for extra privacy
+    const encrypted = CryptoJS.AES.encrypt(content, SECRET_KEY).toString();
+    const entryData = { title, content: encrypted, tags, sentimentScore };
 
     const token = localStorage.getItem('token');
     try {
-      await API.post('/journal/save', entryData, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      if (editingEntryId) {
+        await API.put(`/journal/${editingEntryId}`, entryData, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        setEditingEntryId(null);
+      } else {
+        if (!isOnline) {
+          await saveOfflineEntry(entryData);
+          setAuthMessage("Saved offline.");
+          setContent(''); setTitle(''); setTags('');
+          setIsSaving(false);
+          return;
+        }
+
+        await API.post('/journal/save', entryData, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      }
       setContent(''); setTitle(''); setTags(''); fetchEntries(); 
     } catch (e) { console.error(e); }
     finally { setIsSaving(false); }
+  };
+
+  const handleEdit = (entry) => {
+    setTitle(entry.title);
+    setContent(entry.content);
+    setTags(Array.isArray(entry.tags) ? entry.tags.join(', ') : entry.tags);
+    setEditingEntryId(entry._id);
+    setMainView('dashboard');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCompare = (entry) => {
+    setComparingEntry(entry);
   };
 
   const generateInsights = (allEntries) => {
@@ -238,22 +287,34 @@ function App() {
           </div>
         </div>
         <div className="flex gap-6 items-center">
-          <button onClick={() => setShowProfile(!showProfile)} className="text-[10px] font-black uppercase text-slate-400 hover:text-indigo-600">
-            {showProfile ? 'Dashboard' : 'Profile'}
+          <button onClick={() => setMainView('dashboard')} className={`text-[10px] font-black uppercase ${mainView === 'dashboard' ? 'text-indigo-600' : 'text-slate-400'} hover:text-indigo-600`}>
+            Journal
+          </button>
+          <button onClick={() => setMainView('resources')} className={`text-[10px] font-black uppercase ${mainView === 'resources' ? 'text-indigo-600' : 'text-slate-400'} hover:text-indigo-600`}>
+            Resources
+          </button>
+          <button onClick={() => setMainView('profile')} className={`text-[10px] font-black uppercase ${mainView === 'profile' ? 'text-indigo-600' : 'text-slate-400'} hover:text-indigo-600`}>
+            Profile
           </button>
           <button onClick={() => { localStorage.clear(); setIsLoggedIn(false); }} className="px-5 py-2 bg-slate-900 text-white text-[10px] font-black rounded-lg">Logout</button>
         </div>
       </nav>
 
-      {showProfile ? (
+      {mainView === 'profile' && (
         <div className="max-w-2xl w-full bg-white p-12 rounded-[2rem] shadow-sm border border-slate-100">
           <h2 className="text-2xl font-black text-slate-900 mb-8">Account Settings</h2>
           <ReminderSettings />
           <div className="my-8 h-px bg-slate-50"></div>
           <FeedbackForm />
-          <button onClick={() => setShowProfile(false)} className="mt-8 text-indigo-600 font-bold text-xs uppercase">← Return</button>
+          <button onClick={() => setMainView('dashboard')} className="mt-8 text-indigo-600 font-bold text-xs uppercase">← Return</button>
         </div>
-      ) : (
+      )}
+
+      {mainView === 'resources' && (
+        <WellnessResources />
+      )}
+
+      {mainView === 'dashboard' && (
         <main className="max-w-6xl w-full space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 bg-white rounded-3xl p-10 shadow-sm border border-slate-100 flex flex-col min-h-[450px]">
@@ -261,9 +322,16 @@ function App() {
               <textarea className="w-full px-0 py-2 text-slate-600 placeholder:text-slate-300 border-none outline-none flex-grow resize-none leading-relaxed text-lg" placeholder="How are you feeling?" value={content} onChange={(e) => setContent(e.target.value)} />
               <div className="mt-8 flex flex-col sm:flex-row gap-4 pt-6 border-t border-slate-50">
                 <input className="flex-grow px-4 py-3 bg-slate-50 rounded-xl text-sm outline-none" placeholder="Tags #peace" value={tags} onChange={(e) => setTags(e.target.value)} />
-                <button onClick={handleSave} disabled={isSaving} className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-indigo-700">
-                  {isSaving ? 'Saving...' : 'Save Entry'}
-                </button>
+                <div className="flex gap-2">
+                  {editingEntryId && (
+                    <button onClick={() => { setEditingEntryId(null); setTitle(''); setContent(''); setTags(''); }} className="px-6 py-3 bg-slate-100 text-slate-500 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-200">
+                      Cancel
+                    </button>
+                  )}
+                  <button onClick={handleSave} disabled={isSaving} className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg hover:bg-indigo-700">
+                    {isSaving ? 'Saving...' : (editingEntryId ? 'Update Entry' : 'Save Entry')}
+                  </button>
+                </div>
               </div>
             </div>
             
@@ -291,9 +359,21 @@ function App() {
                 <input type="text" placeholder="Search..." className="w-full py-4 px-6 bg-white border border-slate-100 rounded-2xl text-sm outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
               </div>
             </div>
-            <JournalTimeline entries={entries.filter(e => e.content.toLowerCase().includes(searchQuery.toLowerCase()) || e.title.toLowerCase().includes(searchQuery.toLowerCase()))} />
+            <JournalTimeline
+              entries={entries.filter(e => e.content.toLowerCase().includes(searchQuery.toLowerCase()) || e.title.toLowerCase().includes(searchQuery.toLowerCase()))}
+              onEdit={handleEdit}
+              onCompare={handleCompare}
+            />
           </div>
         </main>
+      )}
+
+      {comparingEntry && (
+        <VersionComparison
+          current={comparingEntry}
+          history={comparingEntry.versionHistory}
+          onClose={() => setComparingEntry(null)}
+        />
       )}
     </div>
   );

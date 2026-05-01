@@ -1,6 +1,6 @@
 import React from 'react';
 
-const JournalTimeline = ({ entries }) => {
+const JournalTimeline = ({ entries, onEdit, onCompare }) => {
   // Sort entries to ensure the newest is always at the top of the timeline
   const sortedEntries = [...entries].sort((a, b) => new Date(b.date) - new Date(a.date));
 
@@ -28,15 +28,34 @@ const JournalTimeline = ({ entries }) => {
             <div className="absolute w-5 h-5 bg-white border-4 border-indigo-500 rounded-full -left-[42px] top-1.5 group-hover:scale-125 group-hover:bg-indigo-600 transition-all duration-300 z-10 shadow-sm"></div>
             
             {/* Subtle Date Indicator */}
-            <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-4 mb-3">
-              <time className="text-xs font-black uppercase tracking-tighter text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded">
-                {new Date(entry.date).toLocaleDateString('en-US', { 
-                  month: 'short', day: 'numeric', year: 'numeric' 
-                })}
-              </time>
-              <h4 className="text-xl font-bold text-gray-800 capitalize group-hover:text-indigo-600 transition-colors duration-300">
-                {entry.title || "Untitled Reflection"}
-              </h4>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-1 md:gap-4 mb-3">
+              <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-4">
+                <time className="text-xs font-black uppercase tracking-tighter text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded">
+                  {new Date(entry.date).toLocaleDateString('en-US', {
+                    month: 'short', day: 'numeric', year: 'numeric'
+                  })}
+                </time>
+                <h4 className="text-xl font-bold text-gray-800 capitalize group-hover:text-indigo-600 transition-colors duration-300">
+                  {entry.title || "Untitled Reflection"}
+                </h4>
+              </div>
+              <div className="flex gap-2">
+                {entry.versionHistory && entry.versionHistory.length > 0 && (
+                  <button
+                    onClick={() => onCompare(entry)}
+                    className="text-[9px] font-black uppercase tracking-widest text-amber-500 bg-amber-50 px-2 py-1 rounded hover:bg-amber-100 transition-colors"
+                    title="View History"
+                  >
+                    History ({entry.versionHistory.length})
+                  </button>
+                )}
+                <button
+                  onClick={() => onEdit(entry)}
+                  className="text-[9px] font-black uppercase tracking-widest text-indigo-500 bg-indigo-50 px-2 py-1 rounded hover:bg-indigo-100 transition-colors"
+                >
+                  Edit
+                </button>
+              </div>
             </div>
 
             {/* Content Card */}

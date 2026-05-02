@@ -1,41 +1,27 @@
 import React from 'react';
 
 const JournalTimeline = ({ entries, onEdit, onCompare }) => {
-  // Sort entries to ensure the newest is always at the top of the timeline
   const sortedEntries = [...entries].sort((a, b) => new Date(b.date) - new Date(a.date));
 
   return (
-    <div className="max-w-4xl w-full px-4 py-10 animate-fade-in">
-      {/* Header Section */}
-      <div className="flex items-center justify-between mb-12">
-        <h3 className="text-2xl font-black text-gray-800 flex items-center gap-3">
-          <span className="bg-indigo-600 text-white p-2.5 rounded-xl shadow-lg shadow-indigo-200 text-sm">
-            📅
-          </span>
-          Your Personal Timeline
-        </h3>
-        <span className="text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-100 px-3 py-1 rounded-full">
-          {entries.length} {entries.length === 1 ? 'Entry' : 'Entries'}
-        </span>
-      </div>
-
+    <div className="max-w-4xl w-full py-6">
       {/* Vertical Timeline Wrapper */}
-      <div className="relative border-l-2 border-indigo-100 ml-4 md:ml-8">
+      <div className="relative border-l-2 border-sage/20 ml-4 md:ml-8">
         {sortedEntries.map((entry, index) => (
-          <div key={entry._id || index} className="mb-12 ml-8 group relative">
+          <div key={entry._id || index} className="mb-12 ml-8 group relative fade-in">
             
             {/* The Timeline Connector Dot */}
-            <div className="absolute w-5 h-5 bg-white border-4 border-indigo-500 rounded-full -left-[42px] top-1.5 group-hover:scale-125 group-hover:bg-indigo-600 transition-all duration-300 z-10 shadow-sm"></div>
+            <div className="absolute w-4 h-4 bg-cream border-2 border-sage rounded-full -left-[41px] top-1.5 group-hover:scale-125 group-hover:bg-sage transition-all duration-300 z-10"></div>
             
-            {/* Subtle Date Indicator */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-1 md:gap-4 mb-3">
+            {/* Date Indicator */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-1 md:gap-4 mb-4">
               <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-4">
-                <time className="text-xs font-black uppercase tracking-tighter text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded">
+                <time className="text-[10px] font-bold uppercase tracking-widest text-sage-dark bg-sage/10 px-3 py-1 rounded-full">
                   {new Date(entry.date).toLocaleDateString('en-US', {
                     month: 'short', day: 'numeric', year: 'numeric'
                   })}
                 </time>
-                <h4 className="text-xl font-bold text-gray-800 capitalize group-hover:text-indigo-600 transition-colors duration-300">
+                <h4 className="text-xl font-serif font-bold text-primary group-hover:text-sage-dark transition-colors duration-300">
                   {entry.title || "Untitled Reflection"}
                 </h4>
               </div>
@@ -43,7 +29,7 @@ const JournalTimeline = ({ entries, onEdit, onCompare }) => {
                 {entry.versionHistory && entry.versionHistory.length > 0 && (
                   <button
                     onClick={() => onCompare(entry)}
-                    className="text-[9px] font-black uppercase tracking-widest text-amber-500 bg-amber-50 px-2 py-1 rounded hover:bg-amber-100 transition-colors"
+                    className="text-[10px] font-bold uppercase tracking-widest text-terracotta-dark bg-terracotta/10 px-3 py-1 rounded-full hover:bg-terracotta/20 transition-colors min-h-[32px] flex items-center"
                     title="View History"
                   >
                     History ({entry.versionHistory.length})
@@ -51,7 +37,7 @@ const JournalTimeline = ({ entries, onEdit, onCompare }) => {
                 )}
                 <button
                   onClick={() => onEdit(entry)}
-                  className="text-[9px] font-black uppercase tracking-widest text-indigo-500 bg-indigo-50 px-2 py-1 rounded hover:bg-indigo-100 transition-colors"
+                  className="text-[10px] font-bold uppercase tracking-widest text-sage-dark bg-sage/10 px-3 py-1 rounded-full hover:bg-sage/20 transition-colors min-h-[32px] flex items-center"
                 >
                   Edit
                 </button>
@@ -59,27 +45,24 @@ const JournalTimeline = ({ entries, onEdit, onCompare }) => {
             </div>
 
             {/* Content Card */}
-            <div className="relative bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-indigo-100 transition-all duration-500 group-hover:-translate-y-1">
-              {/* Decorative Quote Mark */}
-              <span className="absolute top-4 right-6 text-4xl text-gray-50 font-serif pointer-events-none">"</span>
-              
-              <p className="text-gray-600 text-base leading-relaxed whitespace-pre-wrap italic relative z-10">
+            <div className="relative bg-white/60 backdrop-blur-sm p-8 rounded-3xl border border-white/40 shadow-soft hover:shadow-md transition-all duration-500 group-hover:-translate-y-1">
+              <p className="text-secondary text-base leading-relaxed whitespace-pre-wrap italic">
                 {entry.content}
               </p>
               
               {/* Tag Cloud */}
-              <div className="mt-5 flex flex-wrap gap-2">
+              <div className="mt-6 flex flex-wrap gap-2">
                 {entry.tags && entry.tags.length > 0 ? (
                   entry.tags.map((tag, i) => (
                     <span 
                       key={i} 
-                      className="text-[10px] bg-gray-50 text-gray-500 border border-gray-100 px-3 py-1 rounded-lg uppercase font-black tracking-widest hover:bg-indigo-600 hover:text-white transition-colors cursor-default"
+                      className="text-[10px] bg-cream text-secondary border border-secondary/10 px-3 py-1 rounded-lg uppercase font-bold tracking-widest hover:bg-sage hover:text-white transition-colors cursor-default"
                     >
                       #{tag}
                     </span>
                   ))
                 ) : (
-                  <span className="text-[10px] text-gray-300 italic">#no-tags</span>
+                  <span className="text-[10px] text-secondary/30 italic">#no-tags</span>
                 )}
               </div>
             </div>
@@ -88,8 +71,8 @@ const JournalTimeline = ({ entries, onEdit, onCompare }) => {
         
         {/* End of Journey Marker */}
         <div className="ml-8 mt-4">
-          <p className="text-xs font-bold text-gray-300 uppercase tracking-widest flex items-center gap-2">
-            <span className="w-2 h-2 bg-gray-200 rounded-full"></span>
+          <p className="text-[10px] font-bold text-secondary/40 uppercase tracking-widest flex items-center gap-2">
+            <span className="w-1.5 h-1.5 bg-secondary/20 rounded-full"></span>
             End of Timeline
           </p>
         </div>

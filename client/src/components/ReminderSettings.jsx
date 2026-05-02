@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import API from '../../api.js'; // Adjust the path based on your folder structure
+import API from '../../api.js';
 
 const ReminderSettings = () => {
   const [reminders, setReminders] = useState([]);
@@ -11,7 +11,6 @@ const ReminderSettings = () => {
   const fetchReminders = async () => {
     const token = localStorage.getItem('token');
     try {
-      // Replaced fetch with API.get
       const response = await API.get('/reminders', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -30,14 +29,14 @@ const ReminderSettings = () => {
     setIsSaving(true);
     const token = localStorage.getItem('token');
     try {
-      // Replaced fetch with API.post
       await API.post('/reminders', 
         { activity, time, days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] },
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
       setMessage("Reminder added!");
       fetchReminders();
-    } catch (err) {
+      setTimeout(() => setMessage(''), 3000);
+    } catch {
       setMessage("Failed to add reminder");
     } finally {
       setIsSaving(false);
@@ -47,7 +46,6 @@ const ReminderSettings = () => {
   const handleDelete = async (id) => {
     const token = localStorage.getItem('token');
     try {
-      // Replaced fetch with API.delete
       await API.delete(`/reminders/${id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -58,15 +56,15 @@ const ReminderSettings = () => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-[2rem] border border-indigo-50 shadow-sm mt-6">
-      <h3 className="text-sm font-black text-indigo-900 uppercase tracking-widest mb-4">Wellness Reminders</h3>
+    <div className="bg-white/40 backdrop-blur-sm p-6 rounded-3xl border border-white/40 shadow-soft mt-6">
+      <h3 className="text-sm font-bold text-primary uppercase tracking-widest mb-6">Daily Intentions</h3>
 
-      <form onSubmit={handleAddReminder} className="space-y-3 mb-6">
-        <div className="flex gap-2">
+      <form onSubmit={handleAddReminder} className="space-y-4 mb-8">
+        <div className="flex flex-col sm:flex-row gap-3">
           <select
             value={activity}
             onChange={(e) => setActivity(e.target.value)}
-            className="flex-1 p-3 bg-gray-50 rounded-xl border-none outline-none text-xs font-bold text-gray-500"
+            className="flex-1 p-3 bg-white/80 rounded-2xl border-none outline-none text-sm font-medium text-primary shadow-soft min-h-[44px]"
           >
             <option value="journaling">Journaling</option>
             <option value="meditation">Meditation</option>
@@ -77,36 +75,36 @@ const ReminderSettings = () => {
             type="time"
             value={time}
             onChange={(e) => setTime(e.target.value)}
-            className="p-3 bg-gray-50 rounded-xl border-none outline-none text-xs font-bold text-gray-500"
+            className="p-3 bg-white/80 rounded-2xl border-none outline-none text-sm font-medium text-primary shadow-soft min-h-[44px]"
           />
         </div>
         <button
           type="submit"
           disabled={isSaving}
-          className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold text-xs hover:bg-indigo-700 transition-all shadow-md"
+          className="btn-primary w-full"
         >
-          {isSaving ? 'Adding...' : '+ Add Reminder'}
+          {isSaving ? 'Adding...' : '+ Set Reminder'}
         </button>
-        {message && <p className="text-[10px] text-center font-bold text-indigo-400">{message}</p>}
+        {message && <p className="text-[10px] text-center font-bold text-sage-dark bg-sage/10 py-2 rounded-xl">{message}</p>}
       </form>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {reminders.map((r) => (
-          <div key={r._id} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+          <div key={r._id} className="flex justify-between items-center p-4 bg-white/60 rounded-2xl border border-white/20 shadow-soft">
             <div>
-              <p className="text-xs font-black text-gray-700 capitalize">{r.activity}</p>
-              <p className="text-[10px] font-bold text-gray-400">Daily at {r.time}</p>
+              <p className="text-sm font-bold text-primary capitalize">{r.activity}</p>
+              <p className="text-[11px] font-medium text-secondary italic">Daily at {r.time}</p>
             </div>
             <button
               onClick={() => handleDelete(r._id)}
-              className="text-red-300 hover:text-red-500 text-xs font-bold transition-colors"
+              className="text-terracotta hover:text-terracotta-dark p-2 text-xs font-bold transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
             >
               Remove
             </button>
           </div>
         ))}
         {reminders.length === 0 && (
-          <p className="text-center text-[10px] text-gray-300 font-bold italic">No reminders set yet.</p>
+          <p className="text-center text-[10px] text-secondary/40 font-bold italic py-4">No reminders set yet.</p>
         )}
       </div>
     </div>

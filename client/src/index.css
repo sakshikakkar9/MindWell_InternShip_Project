@@ -1,24 +1,138 @@
 @import "tailwindcss";
 
-/* If the above doesn't work, stick to the v3 syntax: */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@theme {
+  --color-sage-light: #BDC7AD;
+  --color-sage: #A3B18A;
+  --color-sage-dark: #8A9A73;
+  --color-cream: #F6F1EB;
+  --color-terracotta-light: #E6D2C4;
+  --color-terracotta: #DDBEA9;
+  --color-terracotta-dark: #C8A087;
+  --color-primary: #344E41;
+  --color-secondary: #6B705C;
 
-body {
-  background-color: #f9fafb;
-}
-/* Add this to your index.css or a style tag in App.jsx */
-@keyframes pulse-glow {
-  0% { box-shadow: 0 0 0 0px rgba(99, 102, 241, 0.4); }
-  70% { box-shadow: 0 0 0 20px rgba(99, 102, 241, 0); }
-  100% { box-shadow: 0 0 0 0px rgba(99, 102, 241, 0); }
+  --font-serif: "Playfair Display", serif;
+  --font-sans: Inter, sans-serif;
+
+  --radius-2xl: 16px;
+  --radius-3xl: 24px;
+
+  --shadow-soft: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 10px -2px rgba(0, 0, 0, 0.03);
 }
 
-.breathing-circle-active {
-  transition: all 4000ms cubic-bezier(0.4, 0, 0.2, 1);
+@layer base {
+  body {
+    background-color: var(--color-cream);
+    color: var(--color-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.7;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif);
+    color: var(--color-primary);
+  }
+
+  ::selection {
+    background-color: rgba(163, 177, 138, 0.3);
+  }
 }
 
-.hold-pulse {
-  animation: pulse-glow 2s infinite;
+@layer components {
+  .glass {
+    background-color: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .btn-primary {
+    background-color: var(--color-sage);
+    color: var(--color-primary);
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-2xl);
+    font-weight: 700;
+    box-shadow: var(--shadow-soft);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.875rem;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--color-sage-dark);
+  }
+
+  .btn-primary:active {
+    transform: scale(0.95);
+  }
+
+  .btn-secondary {
+    background-color: var(--color-terracotta);
+    color: var(--color-primary);
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-2xl);
+    font-weight: 700;
+    box-shadow: var(--shadow-soft);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.875rem;
+  }
+
+  .btn-secondary:hover {
+    background-color: var(--color-terracotta-dark);
+  }
+
+  .input-field {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: var(--radius-2xl);
+    border: 1px solid transparent;
+    outline: none;
+    transition: all 0.3s ease;
+    color: var(--color-primary);
+  }
+
+  .input-field:focus {
+    border-color: var(--color-sage);
+    box-shadow: 0 0 0 4px rgba(163, 177, 138, 0.1);
+  }
+
+  .input-field::placeholder {
+    color: var(--color-secondary);
+    opacity: 0.6;
+  }
+}
+
+/* Animations */
+@keyframes soft-glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(163, 177, 138, 0.2); }
+  50% { box-shadow: 0 0 20px rgba(163, 177, 138, 0.4); }
+}
+
+.glow-focus:focus {
+  animation: soft-glow 2s infinite ease-in-out;
+}
+
+.fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }

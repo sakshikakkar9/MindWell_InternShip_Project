@@ -9,13 +9,16 @@ import ReminderSettings from './components/ReminderSettings';
 import FeedbackForm from './components/FeedbackForm';
 import MoodInsights from './components/MoodInsights';
 import WellnessResources from './components/WellnessResources';
+import WellnessReport from './components/WellnessReport';
 import VersionComparison from './components/VersionComparison';
-import { saveOfflineEntry, getOfflineEntries, clearOfflineEntries } from './utils/db';
+import { useRef } from 'react';
+import { saveOfflineEntry, getOfflineEntries, clearOfflineEntries, verifyDataConsistency } from './utils/db';
 
 const SECRET_KEY = 'your-secret-key-123'; 
 
 function App() {
   // --- STATE MANAGEMENT ---
+  const mainContentRef = useRef(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isLoggedIn, setIsLoggedIn] = useState(false); 
   const [view, setView] = useState('login'); 
@@ -124,6 +127,9 @@ function App() {
       const response = await API.get(`/journal/entries`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+
+      // Task 28: Verify consistency
+      verifyDataConsistency(response.data.entries.length);
       
       const decoded = response.data.entries.map(entry => {
         try {
@@ -226,6 +232,13 @@ function App() {
 
   useEffect(() => { if (isLoggedIn) fetchEntries(); }, [isLoggedIn]);
 
+  useEffect(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.focus();
+      window.scrollTo(0, 0);
+    }
+  }, [mainView]);
+
   // --- RENDER ---
   if (!isLoggedIn) {
     return (
@@ -301,7 +314,11 @@ function App() {
       </nav>
 
       {mainView === 'profile' && (
-        <div className="max-w-2xl w-full bg-white p-12 rounded-[2rem] shadow-sm border border-slate-100">
+        <div
+          ref={mainContentRef}
+          tabIndex="-1"
+          className="max-w-2xl w-full bg-white p-12 rounded-[2rem] shadow-sm border border-slate-100 outline-none"
+        >
           <h2 className="text-2xl font-black text-slate-900 mb-8">Account Settings</h2>
           <ReminderSettings />
           <div className="my-8 h-px bg-slate-50"></div>
@@ -311,11 +328,22 @@ function App() {
       )}
 
       {mainView === 'resources' && (
-        <WellnessResources />
+        <div
+          ref={mainContentRef}
+          tabIndex="-1"
+          className="max-w-4xl w-full outline-none"
+        >
+          <WellnessReport />
+          <WellnessResources />
+        </div>
       )}
 
       {mainView === 'dashboard' && (
-        <main className="max-w-6xl w-full space-y-8">
+        <main
+          ref={mainContentRef}
+          tabIndex="-1"
+          className="max-w-6xl w-full space-y-8 outline-none"
+        >
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 bg-white rounded-3xl p-10 shadow-sm border border-slate-100 flex flex-col min-h-[450px]">
               <input className="w-full px-0 text-3xl font-black placeholder:text-slate-200 border-none outline-none mb-4 text-indigo-950" placeholder="Title..." value={title} onChange={(e) => setTitle(e.target.value)} />

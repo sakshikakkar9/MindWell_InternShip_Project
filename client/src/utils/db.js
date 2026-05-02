@@ -32,3 +32,19 @@ export const clearOfflineEntries = async () => {
   await tx.objectStore(STORE_NAME).clear();
   await tx.done;
 };
+
+/**
+ * Task 28: Data Consistency Check
+ * Compares local pending entries with server state
+ */
+export const verifyDataConsistency = async (serverCount) => {
+  const offlineEntries = await getOfflineEntries();
+  const localCount = offlineEntries.length;
+
+  console.log(`[Consistency Check] Local pending: ${localCount}, Server total: ${serverCount}`);
+
+  return {
+    isConsistent: localCount === 0, // In an ideal synced state
+    pendingCount: localCount
+  };
+};

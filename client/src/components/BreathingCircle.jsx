@@ -118,6 +118,7 @@ const playCue = (frequency) => {
       {/* BUTTON: High z-index and explicit cursor */}
       <button 
         onClick={handleToggle}
+        aria-label={isActive ? 'Pause breathing exercise' : 'Start breathing exercise'}
         className={`relative z-30 px-10 py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all transform active:scale-95 cursor-pointer ${
           isActive 
           ? 'bg-gray-100 text-gray-500' 
@@ -126,6 +127,11 @@ const playCue = (frequency) => {
       >
         {isActive ? 'Pause Session' : 'Start Session'}
       </button>
+
+      {/* Screen Reader Live Region */}
+      <div className="sr-only" aria-live="polite">
+        {isActive ? `Phase: ${phase}, Time remaining: ${timeLeft} seconds` : 'Breathing exercise paused'}
+      </div>
 
       <div className="absolute bottom-4 right-6 text-[8px] font-bold text-gray-300 uppercase z-10">
         Task 13: Immersive Interaction
